@@ -1,3 +1,5 @@
+import java.util.Arrays;
+
 public class HashTable {
 
     static class Entry {
@@ -119,5 +121,43 @@ public class HashTable {
             p = p.next;
         }
         return null;
+    }
+
+
+    public Object get(Object key) {
+        int hash = hash(key);
+        return get(hash, key);
+    }
+
+    public void put(Object key, Object value) {
+        int hash = hash(key);
+        put(hash, key, value);
+    }
+
+    public Object remove(Object key) {
+        int hash = hash(key);
+        return remove(hash, key);
+    }
+
+    private static int hash(Object key) {
+        if (key instanceof String k) {
+            return Hashing.murmur3_32().hashString(k, StandardCharsets.UTF_8).asInt();
+        }
+        int hash = key.hashCode();
+        return hash ^ (hash >>> 16);
+    }
+
+    public void print() {
+        int[] sums = new int[table.length];
+        for (int i = 0; i < table.length; i++) {
+            Entry p = table[i];
+            while (p != null) {
+                sums[i]++;
+                p = p.next;
+            }
+        }
+        //System.out.println(Arrays.toString(sums));
+        Map<Integer, Long> collect = Arrays.stream(sums).boxed().collect(Collectors.groupingBy(e -> e, Collectors.counting()));
+        System.out.println(collect);
     }
 }
