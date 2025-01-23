@@ -2,6 +2,7 @@
 #include <cstddef>
 #include <cstdio>
 #include <cstdlib>
+#include <utility>
 using namespace std;
 
 typedef struct Node {
@@ -9,6 +10,80 @@ typedef struct Node {
     int freq;
     struct Node *lchild, *rchild;
 } Node;
+
+typedef struct Heap {
+    Node **__data, **data;
+    int n, size;
+} Heap;
+
+Heap *getNewHeap(int size) {
+    Heap *h = (Heap *)malloc(sizeof(Heap));
+    h->__data = (Node **)malloc(sizeof(Node *) * size);
+    h->data = h->__data - 1;
+    h->n = 0;
+    h->size = size;
+    return h;
+}
+
+int fullHeap(Heap *h) {
+    return h->n == h->size;
+}
+
+int emptyHeap(Heap *h) {
+    return h->n == 0;
+}
+
+Node *top(Heap *h) {
+    if (emptyHeap(h)) return NULL;
+    return h->data[1];
+}
+
+int cmpHeap(Heap *h, int i, int j) {
+    return h->data[i]->freq < h->data[j]->freq;
+}
+
+void up_maintain(Heap *h, int i) {
+    while (i > 1 && cmpHeap(h, i, i / 2)) {
+        swap(h->data[i], h->data[i / 2]);
+        i = i / 2;
+    }
+    return;
+}
+
+void down_maintain(Heap *h, int i) {
+    while (i * 2 <= h->n) {
+        int ind = i, l = i * 2, r = i * 2 + 1;
+        if (cmpHeap(h, l, ind)) ind = l;
+        if (r <= h->n && cmpHeap(h, r, ind)) ind = r;
+        if (ind == i) return;
+        swap(h->data[i], h->data[ind]);
+        i = ind;
+    }
+    return;
+}
+
+int pushHeap(Heap *h, Node *n) {
+    if (fullHeap(h)) return 0;
+    h->n += 1;
+    h->data[h->n] = n;
+    up_maintain(h, h->n);
+    return 1;
+}
+
+int popHeap(Heap *h) {
+    if (emptyHeap(h)) return 0;
+    h->data[1] = h->data[h->n];
+    h->n -= 1;
+    down_maintain(h, 1);
+    return 1;
+}
+
+void clearHeap(Heap *h) {
+    if (h == NULL) return;
+    free(h->__data);
+    free(h);
+    return;
+}
 
 Node *getNewNode(int freq, char ch) {
     Node *p = (Node *)malloc(sizeof(Node));
@@ -42,18 +117,31 @@ int find_min_node(Node **node_arr, int n) {
 }
 
 Node *buildHaffmanTree(Node **node_arr, int n) {
+    Heap *h = getNewHeap(n);
+    for (int i = 0; i < n; i++) pushHeap(h, node_arr[i]);
     for (int i = 1; i < n; i++) {
-        int ind1 = find_min_node(node_arr, n - i);
-        swap_node(node_arr, ind1, n - i);
-        int ind2 = find_min_node(node_arr, n - i - 1);
-        swap_node(node_arr, ind2, n - i - 1);
-        int freq = node_arr[n - i]->freq + node_arr[n - i - 1]->freq;
-        Node *node = getNewNode(freq, 0);
-        node->lchild = node_arr[n - i - 1];
-        node->rchild = node_arr[n - i];
-        node_arr[n - i - 1] = node;
+        Node *node1 = top(h);
+        popHeap(h);
+        Node *node2 = top(h);
+        popHeap(h);
+        Node *node3 = getNewNode(node1->freq + node2->freq, 0);
+        node3->lchild = node1;
+        node3->rchild = node2;
+        pushHeap(h, node3);
+        //int ind1 = find_min_node(node_arr, n - i);
+        //swap_node(node_arr, ind1, n - i);
+        //int ind2 = find_min_node(node_arr, n - i - 1);
+        //swap_node(node_arr, ind2, n - i - 1);
+        //int freq = node_arr[n - i]->freq + node_arr[n - i - 1]->freq;
+        //Node *node = getNewNode(freq, 0);
+        //node->lchild = node_arr[n - i - 1];
+        //node->rchild = node_arr[n - i];
+        //node_arr[n - i - 1] = node;
     }
-    return node_arr[0];
+    Node *ret = top(h);
+    clearHeap(h);
+    return ret;
+    //return node_arr[0];
 }
 
 #define MAX_CHAR_NUM 128
