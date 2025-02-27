@@ -1,0 +1,15 @@
+#include <stdio.h>
+int main(void)
+{
+    int n;
+    scanf("%d", &n);
+    n % 2 == 0 && ({ goto if_stmt; 1; });
+    !(n % 2 == 0) && ({ goto else_stmt; 1; });
+if_stmt:
+    printf("%d is even\n", n);
+    goto if_end;
+else_stmt:
+    printf("%d is odd\n", n);
+if_end:
+    return 0;
+}
